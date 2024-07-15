@@ -33,42 +33,22 @@ class Book extends Model
     {
         return $query->withAvg([
             'reviews' => fn(Builder $q) => $this->dateRangeFilter($q, $from, $to)
-        ], 'rating')->orderBy('reviews_avg_rating', 'desc');
+        ], 'rating');
     }
 
     public function scopePopular(Builder $query, $from = null, $to = null): Builder|QueryBuilder
     {
-        return $query->withReviewsCount()
-            ->orderBy('reviews_count', 'desc');
+        return $query->withReviewsCount()->orderBy('reviews_count', 'desc');
     }
 
     public function scopeHighestRated(Builder $query, $from = null, $to = null): Builder|QueryBuilder
     {
-        return $query->withAvgRating()
-            ->orderBy('reviews_avg_rating', 'desc');
+        return $query->withAvgRating()->orderBy('reviews_avg_rating', 'desc');
     }
 
     public function scopeMinReviews(Builder $query, int $minReviews): Builder|QueryBuilder
     {
         return $query->having('reviews_count', '>=', $minReviews);
-    }
-
-    public function scopeWithRecentReviews(Builder $query, \Closure $interval): Builder
-    {
-        return $query->whereHas(
-            'reviews',
-            function (Builder $q) use ($interval) {
-                $q->whereBetween(
-                    'created_at',
-                    [$interval(now()), now()]
-                );
-            }
-        );
-    }
-
-    public function scopeWithLastWeekReviews(Builder $query): Builder
-    {
-        return $query->withRecentReviews(fn($date) => $date->subWeek());
     }
 
     private function dateRangeFilter(Builder $query, $from = null, $to = null)
